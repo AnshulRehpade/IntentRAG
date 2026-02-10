@@ -1,0 +1,39 @@
+# Environment variables (contains API keys and secrets)
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Model files (too large for git)
+intent_classifier_model_distilbert/
+intent_classifier_model_roberta/
+*.pt
+*.pth
+*.safetensors
+*.bin
+
+# Training artifacts
+tmp_trainer/
+checkpoint-*/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

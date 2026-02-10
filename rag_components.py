@@ -38,17 +38,21 @@ class IntentClassifier:
                     loaded_mapping = json.load(f)
                     # Check if loaded mapping has generic names (intent_0, intent_1, etc.)
                     # If so, use semantic names instead
-                    first_value = list(loaded_mapping.values())[0] if loaded_mapping else ""
-                    if first_value.startswith("intent_") or first_value.startswith("LABEL_"):
-                        # Use semantic mapping based on training code
-                        self.label_mapping = {
-                            "0": "factual",
-                            "1": "person",
-                            "2": "time",
-                            "3": "location",
-                            "4": "explanation",
-                            "5": "other"
-                        }
+                    if isinstance(loaded_mapping, dict) and loaded_mapping:
+                        first_value = list(loaded_mapping.values())[0]
+                        # Check if first value is a string and starts with generic prefix
+                        if isinstance(first_value, str) and (first_value.startswith("intent_") or first_value.startswith("LABEL_")):
+                            # Use semantic mapping based on training code
+                            self.label_mapping = {
+                                "0": "factual",
+                                "1": "person",
+                                "2": "time",
+                                "3": "location",
+                                "4": "explanation",
+                                "5": "other"
+                            }
+                        else:
+                            self.label_mapping = loaded_mapping
                     else:
                         self.label_mapping = loaded_mapping
             else:

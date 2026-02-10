@@ -257,7 +257,7 @@ class KnowledgeBaseBuilder:
         
         points = []
         seen_ids = set()
-        duplicate_ids = []
+        collision_counter = {}
         for idx, (chunk, embedding) in enumerate(tqdm(zip(chunks, embeddings), total=len(chunks), desc="Storing")):
             text_content = chunk['text']
             metadata_str = json.dumps(chunk.get('metadata', {}), sort_keys=True)
@@ -266,9 +266,9 @@ class KnowledgeBaseBuilder:
             point_id = abs(int.from_bytes(hash_bytes[:8], byteorder='big')) % (2**63 - 1)
             
             if point_id in seen_ids:
-                duplicate_ids.append((point_id, idx))
-                collision_counter = len([d for d in duplicate_ids if d[0] == point_id])
-                unique_string = f"{unique_string}|collision_{collision_counter}"
+                collision_key = point_id
+                collision_counter[collision_key] = collision_counter.get(collision_key, 1) + 1
+                unique_string = f"{unique_string}|collision_{collision_counter[collision_key]}"
                 hash_bytes = hashlib.md5(unique_string.encode()).digest()
                 point_id = abs(int.from_bytes(hash_bytes[:8], byteorder='big')) % (2**63 - 1)
             seen_ids.add(point_id)
@@ -405,25 +405,13 @@ class KnowledgeBaseBuilder:
             if conditions:
                 query_filter = models.Filter(must=conditions)
         
-        search_results = None
-        if hasattr(self.client, "search") and callable(getattr(self.client, "search")):
-            search_results = self.client.search(
-                collection_name=self.collection_name,
-                query_vector=query_embedding,
-                limit=top_k,
-                score_threshold=score_threshold,
-                query_filter=query_filter
-            )
-        else:
-            response = self.client.query_points(
-                collection_name=self.collection_name,
-                query=query_embedding,
-                limit=top_k,
-                score_threshold=score_threshold,
-                query_filter=query_filter,
-                with_payload=True
-            )
-            search_results = response.points
+        search_results = self.client.query_points(
+            collection_name=self.collection_name,
+            query=query_embedding,
+            limit=top_k,
+            score_threshold=score_threshold,
+            query_filter=query_filter
+        ).points
         
         results = []
         for result in search_results:

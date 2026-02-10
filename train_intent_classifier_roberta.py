@@ -13,7 +13,6 @@ This script:
 
 import os
 import json
-import requests
 import tempfile
 from typing import Dict, List, Tuple
 from datasets import load_dataset, Dataset, concatenate_datasets
@@ -26,7 +25,9 @@ from transformers import (
     DataCollatorWithPadding
 )
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from sklearn.model_selection import train_test_split
 import numpy as np
+from collections import Counter
 
 
 def load_trec_dataset():
@@ -140,9 +141,26 @@ def load_sciq_dataset():
 
 def preprocess_trec(example):
     """Preprocess TREC dataset for intent classification."""
-    # TREC has 'text' and 'coarse_label' or 'fine_label'
+    # TREC has 'text' and 'coarse_label' (0-5: ABBR, DESC, ENTY, HUM, LOC, NUM)
     text = example.get('text', '')
-    label = example.get('coarse_label', example.get('fine_label', 0))
+    # Map TREC coarse labels to unified intent classes
+    coarse_label = example.get('coarse_label', None)
+    if coarse_label is None:
+        coarse_label = example.get('fine_label', 0)
+    
+    # Map TREC classes to unified intent classes
+    # TREC: 0=ABBR, 1=DESC, 2=ENTY, 3=HUM, 4=LOC, 5=NUM
+    # Unified: 0=Factual(what), 1=Person(who), 2=Time(when), 3=Location(where), 4=Explanation(why/how), 5=Other
+    # CORRECTED MAPPING (semantically accurate):
+    # 0=ABBR → 0 (What is this abbreviation? Factual)
+    # 1=DESC → 4 (Describe this, explain how it works. Explanation)
+    # 2=ENTY → 0 (What type of entity? Factual)
+    # 3=HUM → 1 (Who is this person? Person)
+    # 4=LOC → 3 (Where is this? Location)
+    # 5=NUM → 0 (What is the quantity/number? Factual)
+    trec_to_unified = {0: 0, 1: 4, 2: 0, 3: 1, 4: 3, 5: 0}
+    label = trec_to_unified.get(int(coarse_label), 5)
+    
     return {
         'text': text,
         'label': label,
@@ -238,22 +256,70 @@ def combine_datasets(trec_data, squad_data, sciq_data, max_samples_per_dataset=N
     val_combined = concatenate_datasets([squad_val, sciq_val])
     test_combined = concatenate_datasets([trec_test, sciq_test])
     
-    print(f"✓ Combined dataset:")
-    print(f"  - Train: {len(train_combined)} samples")
+    print(f"✓ Combined dataset (before stratified split):")
+    print(f"  - Combined Train: {len(train_combined)} samples")
+    print(f"  - Validation: {len(val_combined)} samples")
+    print(f"  - Test: {len(test_combined)} samples")
+    
+    # Use stratified split on training data for better class distribution
+    train_indices = list(range(len(train_combined)))
+    train_labels = train_combined['label']
+    
+    # Stratified train/val split (80/20)
+    train_idx, val_idx = train_test_split(
+        train_indices,
+        test_size=0.2,
+        stratify=train_labels,
+        random_state=42
+    )
+    
+    train_stratified = train_combined.select(train_idx)
+    val_stratified = train_combined.select(val_idx)
+    
+    # Add squad and sciq validation for additional validation data
+    val_combined = concatenate_datasets([val_stratified, val_combined])
+    
+    print(f"✓ After stratified train/val split:")
+    print(f"  - Train: {len(train_stratified)} samples")
     print(f"  - Validation: {len(val_combined)} samples")
     print(f"  - Test: {len(test_combined)} samples")
     
     # Get unique labels
-    unique_labels = sorted(set(train_combined['label']))
+    unique_labels = sorted(set(train_stratified['label']))
     num_labels = len(unique_labels)
     print(f"  - Number of intent classes: {num_labels}")
     
-    return train_combined, val_combined, test_combined, num_labels
+    # Calculate class weights for training
+    class_weights = calculate_class_weights(train_stratified['label'])
+    
+    return train_stratified, val_combined, test_combined, num_labels, class_weights
 
 
 def tokenize_function(examples, tokenizer):
     """Tokenize the text examples."""
     return tokenizer(examples['text'], truncation=True, padding='max_length', max_length=128)
+
+
+def calculate_class_weights(labels):
+    """Calculate class weights for imbalanced datasets."""
+    label_counts = Counter(labels)
+    total_samples = len(labels)
+    num_classes = len(label_counts)
+    
+    class_weights = {}
+    for label, count in label_counts.items():
+        # Weight inversely proportional to frequency
+        weight = total_samples / (num_classes * count)
+        class_weights[label] = weight
+    
+    print(f"\nClass distribution:")
+    for label in sorted(class_weights.keys()):
+        count = label_counts[label]
+        weight = class_weights[label]
+        percentage = 100.0 * count / total_samples
+        print(f"  Class {label}: {count} samples ({percentage:.1f}%) - weight: {weight:.3f}")
+    
+    return class_weights
 
 
 def compute_metrics(eval_pred):
@@ -291,9 +357,13 @@ def train_intent_classifier(
     sciq_data = load_sciq_dataset()
     
     # Combine datasets
-    train_dataset, val_dataset, test_dataset, num_labels = combine_datasets(
+    train_dataset, val_dataset, test_dataset, num_labels, class_weights = combine_datasets(
         trec_data, squad_data, sciq_data, max_samples_per_dataset
     )
+    
+    # Note: class_weights are calculated and saved for future use with weighted loss training
+    # The current implementation uses standard cross-entropy loss, but class_weights are
+    # available in label_mapping.json for advanced training scenarios
     
     # Load tokenizer and model
     print(f"\nLoading model: {model_name}...")
@@ -387,7 +457,6 @@ def train_intent_classifier(
         train_dataset=train_tokenized,
         eval_dataset=val_tokenized,
         data_collator=data_collator,
-        tokenizer=tokenizer,
         compute_metrics=compute_metrics,
     )
     
@@ -408,10 +477,19 @@ def train_intent_classifier(
     trainer.save_model()
     tokenizer.save_pretrained(output_dir)
     
-    # Save label mapping
-    label_mapping = {i: f'intent_{i}' for i in range(num_labels)}
+    # Save label mapping and class weights
+    intent_names = ['What/Which (Factual)', 'Who (Person)', 'When (Time)', 'Where (Location)', 'Why/How (Explanation)', 'Other']
+    label_mapping = {i: intent_names[i] if i < len(intent_names) else f'intent_{i}' for i in range(num_labels)}
+    label_mapping_with_weights = {
+        'label_to_intent': label_mapping,
+        'class_weights': {int(k): float(v) for k, v in class_weights.items()}
+    }
     with open(f'{output_dir}/label_mapping.json', 'w') as f:
-        json.dump(label_mapping, f, indent=2)
+        json.dump(label_mapping_with_weights, f, indent=2)
+    
+    print(f"\nLabel mapping saved:")
+    for label, name in label_mapping.items():
+        print(f"  {label}: {name}")
     
     print(f"\n✓ Training complete! Model saved to {output_dir}")
     return trainer, test_results
