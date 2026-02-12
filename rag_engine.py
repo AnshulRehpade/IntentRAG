@@ -26,6 +26,7 @@ load_dotenv()
 # Import knowledge base and RAG components
 from knowledge_base import KnowledgeBaseBuilder
 from rag_components import IntentClassifier, RAGRouter, ContextProcessor
+from hallucination_detector import HallucinationDetector
 
 
 class RAGEngine:
@@ -37,7 +38,8 @@ class RAGEngine:
         qdrant_url: Optional[str] = None,
         qdrant_api_key: Optional[str] = None,
         collection_name: Optional[str] = None,
-        openai_api_key: Optional[str] = None
+        openai_api_key: Optional[str] = None,
+        enable_hallucination_detection: bool = True
     ):
         """
         Initialize RAG engine.
@@ -48,6 +50,7 @@ class RAGEngine:
             qdrant_api_key: Qdrant API key (from .env if None)
             collection_name: Collection name (from .env if None)
             openai_api_key: OpenAI API key (from .env if None)
+            enable_hallucination_detection: Enable hallucination detection and logging
         """
         # Initialize intent classifier
         self.intent_classifier = IntentClassifier(intent_model_path)
@@ -73,6 +76,17 @@ class RAGEngine:
         
         self.openai_client = OpenAI(api_key=openai_api_key)
         self.model_name = "gpt-4o-mini"
+        
+        # Initialize hallucination detector
+        self.enable_hallucination_detection = enable_hallucination_detection
+        if self.enable_hallucination_detection:
+            try:
+                self.hallucination_detector = HallucinationDetector(openai_api_key=openai_api_key)
+            except Exception as e:
+                print(f"Warning: Could not initialize hallucination detector: {e}")
+                self.hallucination_detector = None
+        else:
+            self.hallucination_detector = None
     
     def retrieve_context(self, query: str, intent_name: str) -> List[Dict]:
         """
@@ -432,6 +446,31 @@ Now output ONLY the JSON object, nothing else."""
         
         result = generation_result
         
+        # Detect hallucinations if enabled
+        hallucination_result = None
+        if self.hallucination_detector and not result.get("fallback_used"):
+            # Only check grounded answers (fallback uses general knowledge by design)
+            try:
+                chunk_scores = [chunk.get('score', 0.0) for chunk in ordered_chunks]
+                hallucination_result = self.hallucination_detector.detect(
+                    query=query,
+                    answer=result['answer'],
+                    context=context,
+                    intent_name=intent_name,
+                    intent_id=intent_id,
+                    num_chunks=len(retrieved_chunks),
+                    context_length=len(context),
+                    chunk_scores=chunk_scores,
+                    fallback_used=False
+                )
+                
+                if verbose and hallucination_result.has_hallucination:
+                    print(f"⚠️  Hallucination detected: {hallucination_result.hallucination_type} ({hallucination_result.severity})")
+                    print(f"   Likely causes: {', '.join(hallucination_result.likely_causes)}")
+            except Exception as e:
+                if verbose:
+                    print(f"Warning: Hallucination detection failed: {e}")
+        
         # Compile full response
         response = {
             "query": query,
@@ -455,6 +494,16 @@ Now output ONLY the JSON object, nothing else."""
             "generation": result,
             "fallback_used": result.get("fallback_used", False)
         }
+        
+        # Add hallucination detection results
+        if hallucination_result:
+            response["hallucination_detection"] = {
+                "enabled": True,
+                "has_hallucination": hallucination_result.has_hallucination,
+                "type": hallucination_result.hallucination_type,
+                "severity": hallucination_result.severity,
+                "causes": hallucination_result.likely_causes
+            }
         
         # Add grounded answer to response if fallback was used
         if result.get("fallback_used") and "grounded_answer" in result:

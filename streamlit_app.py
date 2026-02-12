@@ -126,13 +126,27 @@ def main():
 
         pill_color = "warn" if fallback_used else "ok"
         fallback_text = "Fallback used" if fallback_used else "Grounded"
+        
+        # Check for hallucination
+        hallucination = response.get("hallucination_detection", {})
+        has_hallucination = hallucination.get("has_hallucination", False)
+
+        pills_html = f'<span class="pill {pill_color}">⚙️ {fallback_text}</span>'
+        pills_html += f'<span class="pill">🧭 Intent: {intent_name}</span>'
+        pills_html += f'<span class="pill">📚 Chunks: {chunks_retrieved}</span>'
+        
+        if hallucination.get("enabled") and not fallback_used:
+            if has_hallucination:
+                h_type = hallucination.get("type", "UNKNOWN")
+                h_severity = hallucination.get("severity", "UNKNOWN")
+                pills_html += f'<span class="pill fail">⚠️ Hallucination: {h_type} ({h_severity})</span>'
+            else:
+                pills_html += '<span class="pill ok">✅ No hallucination</span>'
 
         st.markdown(
             f"""
             <div style="margin-top:0.5rem; display:flex; gap:12px; flex-wrap:wrap;">
-              <span class="pill {pill_color}">⚙️ {fallback_text}</span>
-              <span class="pill">🧭 Intent: {intent_name}</span>
-              <span class="pill">📚 Chunks: {chunks_retrieved}</span>
+              {pills_html}
             </div>
             """,
             unsafe_allow_html=True,
@@ -149,6 +163,18 @@ def main():
             st.markdown(f"- **Fallback Used**: {response.get('fallback_used', False)}")
             st.markdown(f"- **Chunks Retrieved**: {retrieval.get('chunks_retrieved', 0)}")
             st.markdown(f"- **Context Length**: {retrieval.get('context_length', 0)} chars")
+            
+            # Show hallucination detection details
+            if hallucination.get("enabled") and not fallback_used:
+                st.markdown("---")
+                st.markdown("**Hallucination Detection:**")
+                if has_hallucination:
+                    st.markdown(f"- ⚠️ **Detected**: YES")
+                    st.markdown(f"- **Type**: {hallucination.get('type', 'UNKNOWN')}")
+                    st.markdown(f"- **Severity**: {hallucination.get('severity', 'UNKNOWN')}")
+                    st.markdown(f"- **Likely Causes**: {', '.join(hallucination.get('causes', []))}")
+                else:
+                    st.markdown(f"- ✅ **Detected**: NO")
 
             top_chunks = retrieval.get("top_chunks", []) or []
             if top_chunks:

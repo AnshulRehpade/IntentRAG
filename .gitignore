@@ -27,6 +27,12 @@ tmp_trainer/
 checkpoint-*/
 *.log
 
+# Evaluation and analysis outputs
+evaluation_results/
+demo_evaluation_results/
+hallucination_log.jsonl
+hallucination_report.txt
+
 # IDE
 .vscode/
 .idea/
@@ -37,3 +43,12 @@ checkpoint-*/
 # OS
 .DS_Store
 Thumbs.db
+
+# Test files
+test_*.py
+*_test.py
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
