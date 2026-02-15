@@ -105,8 +105,104 @@ class RAGEngine:
             top_k=strategy["top_k"],
             score_threshold=strategy["score_threshold"]
         )
-        return results
-    
+        return results    
+    def check_context_relevance(
+        self,
+        query: str,
+        retrieved_chunks: List[Dict],
+        relevance_threshold: float = 0.5
+    ) -> Dict:
+        """
+        Check if retrieved context is actually relevant to the query.
+        
+        This prevents the LLM from trying to answer with irrelevant context,
+        which often leads to hallucinations.
+        
+        Args:
+            query: User query
+            retrieved_chunks: List of retrieved chunks
+            relevance_threshold: Minimum relevance score (0-1)
+            
+        Returns:
+            Dictionary with relevance analysis
+        """
+        if not retrieved_chunks:
+            return {
+                'is_relevant': False,
+                'reason': 'No chunks retrieved',
+                'relevant_chunks': [],
+                'irrelevant_chunks': [],
+                'relevance_scores': [],
+                'avg_relevance': 0.0,
+                'num_relevant': 0,
+                'num_irrelevant': 0
+            }
+        
+        # Use LLM to check relevance of each chunk
+        relevant_chunks = []
+        irrelevant_chunks = []
+        relevance_scores = []
+        
+        for chunk in retrieved_chunks:
+            text = chunk.get('text', '')
+            
+            # Quick relevance check prompt
+            prompt = f"""Is this text relevant to answering the query?
+
+Query: {query}
+
+Text: {text[:500]}...
+
+Answer with JSON:
+{{
+    "is_relevant": true/false,
+    "relevance_score": 0.0-1.0,
+    "reason": "brief explanation"
+}}"""
+
+            try:
+                response = self.openai_client.chat.completions.create(
+                    model=self.model_name,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.0,
+                    response_format={"type": "json_object"},
+                    max_tokens=150
+                )
+                
+                import json
+                result = json.loads(response.choices[0].message.content)
+                
+                relevance_score = result.get('relevance_score', 0.0)
+                relevance_scores.append(relevance_score)
+                
+                chunk['relevance_score'] = relevance_score
+                chunk['relevance_reason'] = result.get('reason', '')
+                
+                if result.get('is_relevant', False) and relevance_score >= relevance_threshold:
+                    relevant_chunks.append(chunk)
+                else:
+                    irrelevant_chunks.append(chunk)
+                    
+            except Exception as e:
+                # If check fails, assume it might be relevant (fail-safe)
+                print(f"Warning: Relevance check failed: {e}")
+                chunk['relevance_score'] = 0.5
+                relevant_chunks.append(chunk)
+        
+        # Overall relevance decision
+        is_relevant = len(relevant_chunks) > 0
+        avg_relevance = sum(relevance_scores) / len(relevance_scores) if relevance_scores else 0.0
+        
+        return {
+            'is_relevant': is_relevant,
+            'reason': f"Found {len(relevant_chunks)}/{len(retrieved_chunks)} relevant chunks",
+            'relevant_chunks': relevant_chunks,
+            'irrelevant_chunks': irrelevant_chunks,
+            'relevance_scores': relevance_scores,
+            'avg_relevance': avg_relevance,
+            'num_relevant': len(relevant_chunks),
+            'num_irrelevant': len(irrelevant_chunks)
+        }    
     def generate_grounded_answer(self, query: str, context: str, chunks: List[Dict]) -> Dict:
         """
         Generate strictly grounded answer using custom RAG prompt.
@@ -356,13 +452,14 @@ Now output ONLY the JSON object, nothing else."""
             return False
     
     
-    def answer_query(self, query: str, verbose: bool = False) -> Dict:
+    def answer_query(self, query: str, verbose: bool = False, check_relevance: bool = True) -> Dict:
         """
-        Complete RAG pipeline: intent -> retrieval -> generation.
+        Complete RAG pipeline: intent -> retrieval -> relevance check -> generation.
         
         Args:
             query: User query
             verbose: Whether to print intermediate steps
+            check_relevance: Whether to check context relevance before generation
             
         Returns:
             Dictionary with answer and full pipeline metadata
@@ -383,6 +480,58 @@ Now output ONLY the JSON object, nothing else."""
             print(f"Retrieved {len(retrieved_chunks)} chunks")
             for i, chunk in enumerate(retrieved_chunks[:3], 1):
                 print(f"  [{i}] Score: {chunk['score']:.4f} | Source: {chunk['metadata'].get('source', 'unknown')}")
+        
+        # Step 2.5: Check context relevance (NEW!)
+        relevance_result = None
+        if check_relevance:
+            if verbose:
+                print("Checking context relevance...")
+            
+            relevance_result = self.check_context_relevance(query, retrieved_chunks)
+            
+            if verbose:
+                print(f"Relevance Check: {relevance_result['num_relevant']}/{len(retrieved_chunks)} chunks relevant")
+                print(f"Average Relevance: {relevance_result['avg_relevance']:.3f}")
+            
+            # If no relevant chunks found, skip to fallback immediately
+            if not relevance_result['is_relevant']:
+                if verbose:
+                    print("⚠️  No relevant context found - using fallback")
+                
+                fallback_result = self.generate_fallback_answer(query)
+                return {
+                    "query": query,
+                    "intent": {
+                        "id": intent_id,
+                        "name": intent_name
+                    },
+                    "retrieval": {
+                        "chunks_retrieved": len(retrieved_chunks),
+                        "chunks_after_dedup": 0,
+                        "context_length": 0,
+                        "top_chunks": []
+                    },
+                    "generation": {
+                        "answer": fallback_result['answer'],
+                        "model": self.model_name,
+                        "fallback_used": True,
+                        "tokens_used": fallback_result.get('tokens_used')
+                    },
+                    "fallback_used": True,
+                    "relevance_check": {
+                        "enabled": True,
+                        "num_relevant": relevance_result['num_relevant'],
+                        "num_irrelevant": relevance_result['num_irrelevant'],
+                        "avg_relevance": relevance_result['avg_relevance'],
+                        "is_relevant": relevance_result['is_relevant']
+                    },
+                    "skip_reason": "No relevant context found"
+                }
+            
+            # Use only relevant chunks for generation
+            retrieved_chunks = relevance_result['relevant_chunks']
+            if verbose:
+                print(f"Using {len(retrieved_chunks)} relevant chunks for generation")
         
         # Step 3: Process context
         # Deduplicate
@@ -479,7 +628,7 @@ Now output ONLY the JSON object, nothing else."""
                 "name": intent_name
             },
             "retrieval": {
-                "chunks_retrieved": len(retrieved_chunks),
+                "chunks_retrieved": len(retrieved_chunks) if relevance_result else len(retrieved_chunks),
                 "chunks_after_dedup": len(unique_chunks),
                 "context_length": len(context),
                 "top_chunks": [
@@ -494,6 +643,16 @@ Now output ONLY the JSON object, nothing else."""
             "generation": result,
             "fallback_used": result.get("fallback_used", False)
         }
+        
+        # Add relevance check results if performed
+        if relevance_result:
+            response["relevance_check"] = {
+                "enabled": True,
+                "num_relevant": relevance_result['num_relevant'],
+                "num_irrelevant": relevance_result['num_irrelevant'],
+                "avg_relevance": relevance_result['avg_relevance'],
+                "is_relevant": relevance_result['is_relevant']
+            }
         
         # Add hallucination detection results
         if hallucination_result:

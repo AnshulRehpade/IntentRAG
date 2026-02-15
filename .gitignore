@@ -44,9 +44,8 @@ hallucination_report.txt
 .DS_Store
 Thumbs.db
 
-# Test files
-test_*.py
-*_test.py
+# Jupyter notebooks (optional)
+*.ipynb_checkpoints/
 
 # Temporary files
 *.tmp
