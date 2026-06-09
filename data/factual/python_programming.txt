@@ -1,0 +1,17 @@
+Python Programming Language
+
+Python is a high-level, interpreted, general-purpose programming language created by Guido van Rossum. It was first released in 1991. Python's design philosophy emphasizes code readability with its notable use of significant indentation.
+
+Python supports multiple programming paradigms including structured, object-oriented, and functional programming. It is dynamically typed and uses garbage collection for memory management.
+
+The Python standard library provides modules for file I/O, system calls, sockets, and interfaces to many OS-level operations. Popular third-party packages include NumPy for numerical computing, Pandas for data manipulation, Matplotlib for plotting, and Scikit-learn for machine learning.
+
+Python 3.0 was released in December 2008. It introduced many backwards-incompatible changes to fix design flaws in the language. Python 2 reached end-of-life in January 2020. The latest stable version is Python 3.12, released in October 2023.
+
+Key features of Python include list comprehensions, generators, decorators, context managers, and type hints (introduced in Python 3.5). The Global Interpreter Lock (GIL) limits true multithreading but can be worked around with multiprocessing.
+
+Python is widely used in web development (Django, Flask, FastAPI), data science (Jupyter, Pandas, NumPy), machine learning (TensorFlow, PyTorch, scikit-learn), automation, scripting, and scientific computing.
+
+Package management in Python uses pip (Python Package Installer) and packages are distributed via PyPI (Python Package Index). Virtual environments (venv, conda) isolate project dependencies.
+
+Python's typing module provides support for type hints. Type checkers like mypy can use these annotations for static analysis without affecting runtime behavior.

@@ -1,0 +1,77 @@
+[
+  {
+    "question": "What are the three main types of machine learning?",
+    "ground_truth": "The three main types of machine learning are supervised learning, unsupervised learning, and reinforcement learning.",
+    "intent_category": "factual"
+  },
+  {
+    "question": "What is the transformer architecture based on?",
+    "ground_truth": "The transformer architecture is based on the self-attention mechanism, introduced in the 2017 paper 'Attention Is All You Need' by Vaswani et al.",
+    "intent_category": "factual"
+  },
+  {
+    "question": "Who created the Python programming language?",
+    "ground_truth": "Python was created by Guido van Rossum. He began working on it in the late 1980s at Centrum Wiskunde & Informatica (CWI) in the Netherlands.",
+    "intent_category": "person"
+  },
+  {
+    "question": "Who is the CEO of OpenAI?",
+    "ground_truth": "Sam Altman is the CEO of OpenAI. He previously served as president of Y Combinator from 2014 to 2019.",
+    "intent_category": "person"
+  },
+  {
+    "question": "Who co-founded DeepMind?",
+    "ground_truth": "Demis Hassabis co-founded DeepMind in 2010. DeepMind was acquired by Google in 2014.",
+    "intent_category": "person"
+  },
+  {
+    "question": "When was ChatGPT released?",
+    "ground_truth": "ChatGPT was released on November 30, 2022.",
+    "intent_category": "time"
+  },
+  {
+    "question": "When did AlphaGo defeat Lee Sedol?",
+    "ground_truth": "AlphaGo defeated Lee Sedol in Go on March 15, 2016.",
+    "intent_category": "time"
+  },
+  {
+    "question": "When was the World Wide Web made publicly available?",
+    "ground_truth": "The World Wide Web became publicly available on August 6, 1991.",
+    "intent_category": "time"
+  },
+  {
+    "question": "Where is Google headquartered?",
+    "ground_truth": "Google/Alphabet is headquartered in Mountain View, California, in Silicon Valley.",
+    "intent_category": "location"
+  },
+  {
+    "question": "Where is DeepMind located?",
+    "ground_truth": "DeepMind is headquartered in King's Cross, London, United Kingdom.",
+    "intent_category": "location"
+  },
+  {
+    "question": "Where is the Indian Institute of Science located?",
+    "ground_truth": "The Indian Institute of Science (IISc) is located in Bangalore (Bengaluru), India.",
+    "intent_category": "location"
+  },
+  {
+    "question": "How does the self-attention mechanism work in transformers?",
+    "ground_truth": "Self-attention computes attention scores for each token by projecting inputs into Query, Key, and Value vectors, computing dot products between queries and keys, applying softmax for weights, and computing weighted sums of values.",
+    "intent_category": "explanation"
+  },
+  {
+    "question": "How does RAG reduce hallucinations?",
+    "ground_truth": "RAG reduces hallucinations by grounding the LLM's responses in retrieved evidence from a knowledge base, rather than relying solely on the model's parametric knowledge.",
+    "intent_category": "explanation"
+  },
+  {
+    "question": "Why were transformers invented?",
+    "ground_truth": "Transformers were invented because RNNs and LSTMs processed tokens sequentially, making them slow to train and difficult to parallelize. They also struggled with long-range dependencies. Transformers solve both problems by processing all tokens in parallel using attention mechanisms.",
+    "intent_category": "explanation"
+  },
+  {
+    "question": "What is the company's remote work policy?",
+    "ground_truth": "Employees may work remotely up to 3 days per week with manager approval. Core collaboration hours are 10:00 AM to 3:00 PM local time.",
+    "intent_category": "other"
+  }
+]

@@ -1,7 +1,9 @@
-# All-in-one requirements file for the project
+# IntentRAG v2 — Requirements
 # Install with: pip install -r requirements.txt
 
-# Core ML and NLP libraries
+# ============================================================
+# Core ML and NLP (from v1)
+# ============================================================
 torch>=2.0.0
 transformers>=4.30.0
 sentence-transformers>=2.7.0
@@ -11,20 +13,84 @@ accelerate>=0.20.0
 datasets>=2.20.0
 huggingface-hub>=0.20.0,<1.0.0
 
-# Vector database
-qdrant-client>=1.7.0
-
 # Data processing and utilities
 numpy>=1.24.0,<2.0.0
 scikit-learn>=1.3.0
 tqdm>=4.65.0
 
-# Environment variable management
-python-dotenv>=1.0.0
-
 # Visualization (for evaluation scripts)
 matplotlib>=3.7.0
 seaborn>=0.12.0
 
-# Optional but recommended for better tokenization
+# Tokenization
 tiktoken>=0.5.0
+
+# ============================================================
+# v2 — API Layer
+# ============================================================
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+python-multipart>=0.0.9
+
+# ============================================================
+# v2 — Database
+# ============================================================
+sqlalchemy[asyncio]>=2.0.30
+asyncpg>=0.29.0
+greenlet>=3.0.0
+alembic>=1.13.0
+
+# ============================================================
+# v2 — Vector Store
+# ============================================================
+qdrant-client>=1.9.0
+
+# ============================================================
+# v2 — LlamaIndex (modular packages)
+# ============================================================
+llama-index-core>=0.10.0
+llama-index-vector-stores-qdrant>=0.2.0
+llama-index-embeddings-openai>=0.1.0
+llama-index-llms-openai>=0.1.0
+
+# ============================================================
+# v2 — Reranking
+# ============================================================
+cohere>=5.0.0
+
+# ============================================================
+# v2 — LLM
+# ============================================================
+openai>=1.30.0
+
+# ============================================================
+# v2 — Observability
+# ============================================================
+langfuse>=2.36.0
+
+# ============================================================
+# v2 — Evaluation
+# ============================================================
+ragas==0.1.21
+
+# ============================================================
+# v2 — Authentication
+# ============================================================
+python-jose[cryptography]>=3.3.0
+bcrypt>=4.0.0
+email-validator>=2.1.0
+
+# ============================================================
+# Shared utilities
+# ============================================================
+python-dotenv>=1.0.0
+httpx>=0.27.0
+
+# ============================================================
+# Testing
+# ============================================================
+httpx2>=0.1.0
+pytest>=8.0.0
+pytest-asyncio>=0.23.0

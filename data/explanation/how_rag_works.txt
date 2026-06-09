@@ -1,0 +1,39 @@
+How Retrieval-Augmented Generation (RAG) Works
+
+Retrieval-Augmented Generation (RAG) is a technique that combines information retrieval with text generation to produce more accurate and grounded responses from large language models.
+
+The Problem RAG Solves:
+Large language models (LLMs) have several limitations: they can hallucinate (generate plausible but false information), their knowledge has a cutoff date (they don't know about recent events), and they cannot access private or proprietary data. RAG addresses all three of these problems by grounding the LLM's responses in retrieved evidence.
+
+How the RAG Pipeline Works Step by Step:
+
+Step 1: Document Ingestion
+Documents are first processed and split into smaller chunks (typically 200-500 tokens each). Each chunk is then converted into a numerical vector representation (embedding) using an embedding model like OpenAI's text-embedding-3-small or open-source alternatives like sentence-transformers. These vectors are stored in a vector database such as Qdrant, Pinecone, Weaviate, or ChromaDB.
+
+Step 2: Query Processing
+When a user asks a question, the same embedding model converts the query into a vector. This query vector is then used to search the vector database for the most similar document chunks using similarity metrics like cosine similarity or dot product.
+
+Step 3: Context Assembly
+The top-k most relevant chunks are retrieved from the vector database. These chunks form the context that will be provided to the LLM. Optionally, a reranking model (like Cohere Rerank) re-scores the retrieved chunks using a cross-encoder to improve relevance ordering.
+
+Step 4: Answer Generation
+The retrieved context is combined with the original question in a prompt template and sent to the LLM. The LLM generates an answer based on the provided context rather than relying solely on its parametric knowledge. This grounding significantly reduces hallucinations.
+
+Step 5: Post-processing
+The generated answer may undergo additional checks such as hallucination detection (comparing the answer against the context) and citation verification (ensuring claims are traceable to specific chunks).
+
+Why Vector Similarity Works:
+Embedding models are trained to place semantically similar texts close together in vector space. The question "What is photosynthesis?" and a paragraph explaining photosynthesis will have similar vector representations even if they use different words. This semantic matching is more powerful than keyword search.
+
+Chunking Strategies:
+- Fixed-size chunks: Split every N tokens (simple but may break sentences)
+- Sentence-based: Split at sentence boundaries with overlap
+- Recursive: Split by paragraphs, then sentences, then tokens
+- Semantic: Split at topic boundaries detected by embedding shifts
+
+Advanced RAG Techniques:
+- Hybrid search: Combine vector similarity with keyword matching (BM25)
+- Query expansion: Generate multiple query variants to improve recall
+- Re-ranking: Use cross-encoder models to re-score retrieved documents
+- Self-RAG: LLM decides when to retrieve and evaluates its own retrieval
+- Multi-hop RAG: Chain multiple retrieval steps for complex questions

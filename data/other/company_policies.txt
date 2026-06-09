@@ -1,0 +1,22 @@
+Sample Company Policies and Procedures
+
+Remote Work Policy:
+All employees are eligible for hybrid work arrangements. Employees may work remotely up to 3 days per week with manager approval. Core collaboration hours are 10:00 AM to 3:00 PM local time. Employees must maintain a dedicated workspace and reliable internet connection. VPN usage is required when accessing company systems remotely.
+
+Equipment Policy:
+New employees receive a company laptop, monitor, and accessories during onboarding. Equipment must be returned upon departure. Personal devices may not be used to access production systems. All company devices must have full-disk encryption enabled and automatic updates turned on.
+
+Data Classification:
+- Public: Information intended for public distribution (marketing materials, blog posts)
+- Internal: Information for employees only (internal wikis, meeting notes)
+- Confidential: Sensitive business information (financial reports, customer lists)
+- Restricted: Highly sensitive data requiring strict access controls (PII, credentials, trade secrets)
+
+Incident Response:
+All security incidents must be reported to the security team within 1 hour of discovery. The incident response process has four phases: Identification, Containment, Eradication, and Recovery. Post-incident reviews are conducted within 5 business days.
+
+Code Review Policy:
+All code changes require at least one approving review before merging. Critical systems require two approvals. Reviews should be completed within 24 business hours. Authors should keep pull requests small (under 400 lines changed when possible).
+
+On-Call Rotation:
+Engineering teams maintain 24/7 on-call coverage. Rotations are weekly, Monday to Monday. On-call engineers must acknowledge alerts within 15 minutes and begin investigation within 30 minutes. Compensation includes a per-week stipend plus additional pay for incidents outside business hours.

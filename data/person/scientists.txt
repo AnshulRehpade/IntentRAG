@@ -1,0 +1,11 @@
+Notable Scientists and Their Contributions
+
+Alan Turing was a British mathematician and computer scientist born on June 23, 1912. He is widely considered the father of theoretical computer science and artificial intelligence. His paper "On Computable Numbers" (1936) introduced the concept of the Turing machine. During World War II, he worked at Bletchley Park cracking the Enigma code. He proposed the Turing Test in 1950 as a measure of machine intelligence. He died on June 7, 1954.
+
+Geoffrey Hinton is a British-Canadian cognitive psychologist and computer scientist known as one of the "Godfathers of AI." Born in 1947, he pioneered work on artificial neural networks and deep learning. He developed the backpropagation algorithm, Boltzmann machines, and capsule networks. He won the Turing Award in 2018 along with Yann LeCun and Yoshua Bengio. He left Google in 2023 to speak freely about AI risks.
+
+Yann LeCun is a French computer scientist who is VP and Chief AI Scientist at Meta. Born in 1960, he is known for his work on convolutional neural networks (CNNs). He developed LeNet, one of the first successful CNNs for handwriting recognition. He is a professor at New York University and won the Turing Award in 2018.
+
+Andrew Ng is a British-American computer scientist and entrepreneur. He co-founded Google Brain and was VP and Chief Scientist at Baidu. He is a professor at Stanford University and co-founded Coursera with Daphne Koller in 2012. He also founded DeepLearning.AI and Landing AI.
+
+Demis Hassabis is a British AI researcher who co-founded DeepMind in 2010. DeepMind was acquired by Google in 2014. He led the development of AlphaGo, which defeated world Go champion Lee Sedol in 2016, and AlphaFold, which solved protein structure prediction in 2020. He won the Nobel Prize in Chemistry in 2024 for computational protein design.

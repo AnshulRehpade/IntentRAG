@@ -1,0 +1,44 @@
+How Transformer Neural Networks Work
+
+The transformer architecture is the foundation of modern large language models including GPT, BERT, and Claude. It was introduced in the 2017 paper "Attention Is All You Need" by Vaswani et al. at Google.
+
+Why Transformers Were Invented:
+Before transformers, sequence models like RNNs and LSTMs processed tokens one at a time (sequentially). This made them slow to train and difficult to parallelize. They also struggled with long-range dependencies because information had to pass through many sequential steps. Transformers solve both problems by processing all tokens in parallel using attention mechanisms.
+
+The Self-Attention Mechanism:
+Self-attention is the core innovation of transformers. For each token in a sequence, it computes how much "attention" to pay to every other token. This allows the model to directly relate distant tokens without information passing through intermediate steps.
+
+The computation works as follows:
+1. Each input token is projected into three vectors: Query (Q), Key (K), and Value (V)
+2. Attention scores are computed as the dot product of Q with all K vectors
+3. Scores are divided by the square root of the key dimension (for numerical stability)
+4. Softmax is applied to get attention weights (probabilities summing to 1)
+5. The output is the weighted sum of V vectors using these attention weights
+
+Multi-Head Attention:
+Instead of computing attention once, transformers use multiple attention "heads" in parallel. Each head can learn to attend to different types of relationships (syntactic, semantic, positional). The outputs of all heads are concatenated and linearly projected.
+
+Positional Encoding:
+Since transformers process all tokens simultaneously (unlike RNNs), they have no inherent notion of word order. Positional encodings are added to the input embeddings to provide position information. The original paper used sinusoidal functions; modern models often use learned positional embeddings or rotary position embeddings (RoPE).
+
+The Encoder-Decoder Architecture:
+The original transformer has two parts:
+- Encoder: Processes the input sequence. Uses bidirectional self-attention (each token attends to all other tokens). BERT uses only the encoder.
+- Decoder: Generates the output sequence token by token. Uses masked self-attention (each token can only attend to previous tokens, not future ones). GPT uses only the decoder.
+
+Layer Normalization and Residual Connections:
+Each sub-layer (attention and feed-forward) has a residual connection (skip connection) followed by layer normalization. This helps with training stability and allows gradients to flow through deep networks.
+
+Feed-Forward Networks:
+After attention, each token passes through a position-wise feed-forward network (two linear layers with a nonlinearity in between). This adds non-linear processing capacity to the model.
+
+Training:
+Transformers are typically pre-trained on large text corpora using self-supervised objectives:
+- Causal language modeling (GPT): Predict the next token
+- Masked language modeling (BERT): Predict randomly masked tokens
+- Denoising (T5): Reconstruct corrupted text
+
+After pre-training, models can be fine-tuned on specific tasks or aligned with human preferences using RLHF (Reinforcement Learning from Human Feedback).
+
+Scaling Laws:
+Research has shown that transformer performance improves predictably with more parameters, more data, and more compute. This insight led to the development of increasingly large models (GPT-3: 175B params, GPT-4: estimated >1T params).

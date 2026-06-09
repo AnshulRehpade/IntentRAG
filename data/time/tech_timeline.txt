@@ -1,0 +1,43 @@
+Technology Timeline and Key Dates
+
+1936 - Alan Turing publishes "On Computable Numbers," introducing the Turing machine concept.
+1943 - Warren McCulloch and Walter Pitts publish the first mathematical model of a neural network.
+1950 - Alan Turing proposes the Turing Test in his paper "Computing Machinery and Intelligence."
+1956 - The term "Artificial Intelligence" is coined at the Dartmouth Conference organized by John McCarthy.
+1957 - Frank Rosenblatt invents the Perceptron, an early neural network.
+1958 - John McCarthy creates LISP, one of the first programming languages for AI research.
+
+1969 - ARPANET, the precursor to the internet, sends its first message on October 29.
+1971 - Intel releases the first commercial microprocessor, the Intel 4004, on November 15.
+1973 - Ethernet is invented by Robert Metcalfe at Xerox PARC.
+1976 - Apple Computer is founded by Steve Jobs, Steve Wozniak, and Ronald Wayne on April 1.
+1981 - IBM introduces the IBM PC on August 12.
+1983 - The internet officially switches to TCP/IP on January 1.
+1984 - Apple introduces the Macintosh on January 24.
+
+1989 - Tim Berners-Lee proposes the World Wide Web at CERN on March 12.
+1991 - The World Wide Web becomes publicly available on August 6. Linux kernel 0.01 is released in September. Python 0.9.0 is released in February.
+1993 - NVIDIA is founded on January 23. Mosaic, the first popular web browser, is released.
+1994 - Amazon is founded on July 5. Yahoo! is incorporated on March 2.
+1995 - JavaScript is created by Brendan Eich in 10 days in May. Java 1.0 is released. Windows 95 launches on August 24.
+1998 - Google is incorporated on September 4.
+
+2004 - Facebook is launched on February 4.
+2005 - Git is created by Linus Torvalds in April. YouTube is founded in February.
+2006 - Amazon Web Services (AWS) launches EC2 in August. Twitter is launched in March.
+2007 - The iPhone is released on June 29.
+2008 - Bitcoin whitepaper is published by Satoshi Nakamoto on October 31. Android 1.0 is released on September 23.
+2009 - Bitcoin network goes live on January 3.
+
+2011 - IBM Watson wins Jeopardy! in February.
+2012 - AlexNet wins ImageNet competition, sparking the deep learning revolution.
+2014 - Amazon Alexa and Echo are released in November. Microsoft acquires Minecraft for $2.5 billion.
+2015 - TensorFlow is open-sourced by Google in November. OpenAI is founded in December.
+2016 - AlphaGo defeats Lee Sedol in Go on March 15.
+2017 - The Transformer paper "Attention Is All You Need" is published in June. Bitcoin reaches $20,000 in December.
+2018 - BERT is released by Google in October.
+
+2020 - GPT-3 is released by OpenAI in June with 175 billion parameters.
+2022 - ChatGPT is released on November 30. Stable Diffusion is released in August. GitHub Copilot becomes generally available in June.
+2023 - GPT-4 is released on March 14. Meta releases LLaMA in February. Google releases Gemini in December.
+2024 - OpenAI releases GPT-4o in May. Claude 3.5 Sonnet is released in June. Apple Intelligence is announced at WWDC in June.

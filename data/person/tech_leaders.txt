@@ -1,0 +1,15 @@
+Technology Industry Leaders
+
+Guido van Rossum is a Dutch programmer who created the Python programming language. He began working on Python in the late 1980s at Centrum Wiskunde & Informatica (CWI) in the Netherlands. He served as Python's Benevolent Dictator For Life (BDFL) until 2018 when he stepped down. He worked at Google from 2005 to 2012, then at Dropbox until 2019, and joined Microsoft in 2020.
+
+Linus Torvalds is a Finnish-American software engineer who created the Linux kernel in 1991. He also created Git, the distributed version control system, in 2005. Torvalds was born in Helsinki, Finland, and studied computer science at the University of Helsinki. He received the Millennium Technology Prize in 2012.
+
+Jeff Bezos founded Amazon in 1994 in his garage in Bellevue, Washington. Amazon started as an online bookstore and grew into the world's largest e-commerce and cloud computing company. Bezos also founded Blue Origin (space company) in 2000 and acquired The Washington Post in 2013. He stepped down as Amazon CEO in July 2021.
+
+Satya Nadella became the CEO of Microsoft in February 2014, succeeding Steve Ballmer. Born in Hyderabad, India, he holds degrees from Mangalore University, the University of Wisconsin-Milwaukee, and the University of Chicago. Under his leadership, Microsoft pivoted to cloud computing with Azure and acquired LinkedIn and GitHub.
+
+Jensen Huang co-founded NVIDIA in 1993 and has served as its CEO since inception. Born in Tainan, Taiwan, he moved to the United States as a child. He holds degrees from Oregon State University and Stanford University. NVIDIA's GPUs became essential for AI training and inference workloads.
+
+Sam Altman is the CEO of OpenAI. He previously served as president of Y Combinator from 2014 to 2019. OpenAI released ChatGPT in November 2022, which became the fastest-growing consumer application in history. Altman was briefly fired and rehired as CEO in November 2023.
+
+Fei-Fei Li is a computer scientist known for her work in computer vision and artificial intelligence. She is a professor at Stanford University and co-director of the Stanford Human-Centered AI Institute. She led the creation of ImageNet, a large-scale image dataset that transformed computer vision research.
