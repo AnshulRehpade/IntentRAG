@@ -19,7 +19,6 @@ from llama_index.core.vector_stores.types import (
     MetadataFilters,
     FilterOperator,
 )
-from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient, models
 
@@ -55,11 +54,9 @@ class RetrieverService:
             host=settings.qdrant_host, port=settings.qdrant_port
         )
 
-        # Initialize embedding model
-        self._embed_model = OpenAIEmbedding(
-            api_key=settings.openai_api_key,
-            model_name="text-embedding-3-small",
-        )
+        # Initialize embedding model (local HuggingFace — free, no API key)
+        from llama_index.core.embeddings import resolve_embed_model
+        self._embed_model = resolve_embed_model("local:sentence-transformers/all-MiniLM-L6-v2")
 
         # Create collections and indexes for each intent category
         for category in INTENT_CATEGORIES:
@@ -97,7 +94,7 @@ class RetrieverService:
             self._qdrant_client.create_collection(
                 collection_name=collection_name,
                 vectors_config=models.VectorParams(
-                    size=1536,  # text-embedding-3-small dimension
+                    size=384,  # all-MiniLM-L6-v2 dimension
                     distance=models.Distance.COSINE,
                 ),
             )

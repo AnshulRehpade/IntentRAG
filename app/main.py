@@ -15,12 +15,19 @@ from app.services.tracing import tracing_service
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup: create DB tables. Shutdown: dispose engine, flush traces."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    """Startup: create DB tables (if DB available). Shutdown: dispose engine, flush traces."""
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as e:
+        print(f"⚠️  Database not available on startup: {e}")
+        print("   Tables will be created when DB becomes available.")
     yield
     tracing_service.flush()
-    await engine.dispose()
+    try:
+        await engine.dispose()
+    except Exception:
+        pass
 
 
 app = FastAPI(

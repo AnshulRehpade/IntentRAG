@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Search, Zap, ShieldCheck, AlertTriangle, Clock, Brain } from 'lucide-react'
-import api from '../api'
+import api, { isDemoMode } from '../api'
+import { getMockQueryResponse } from '../demo'
 
 const INTENT_COLORS = {
   factual: 'bg-blue-100 text-blue-800',
@@ -26,6 +27,14 @@ export default function Query() {
     setResult(null)
 
     try {
+      // Demo mode — return mock data
+      if (isDemoMode()) {
+        await new Promise((r) => setTimeout(r, 800)) // Simulate latency
+        setResult(getMockQueryResponse(query.trim()))
+        setLoading(false)
+        return
+      }
+
       const { data } = await api.post('/query', {
         query: query.trim(),
         self_heal: selfHeal,

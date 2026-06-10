@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react'
 import { Activity, Shield, Brain, Database } from 'lucide-react'
-import api from '../api'
+import api, { isDemoMode } from '../api'
+import { MOCK_HEALTH } from '../demo'
 
 export default function Dashboard() {
   const [health, setHealth] = useState(null)
   const user = JSON.parse(localStorage.getItem('user') || '{}')
 
   useEffect(() => {
+    if (isDemoMode()) {
+      setHealth(MOCK_HEALTH)
+      return
+    }
     api.get('/health').then(({ data }) => {
       if (data.success) setHealth(data.data)
     }).catch(() => {})

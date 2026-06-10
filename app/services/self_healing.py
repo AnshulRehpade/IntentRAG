@@ -296,7 +296,7 @@ class SelfHealingPipeline:
         from app.core.config import settings
 
         if not settings.openai_api_key:
-            return {"answer": "[No API key]", "model": "gpt-4o-mini", "usage": {}, "context_used": 0}
+            return {"answer": "[No API key]", "model": settings.default_llm_model, "usage": {}, "context_used": 0}
 
         # Build context
         context_parts = []
@@ -304,11 +304,14 @@ class SelfHealingPipeline:
             context_parts.append(f"[{i}] {chunk['content'].strip()}")
         context_str = "\n\n".join(context_parts)
 
-        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        kwargs = {"api_key": settings.openai_api_key}
+        if settings.openai_base_url:
+            kwargs["base_url"] = settings.openai_base_url
+        client = AsyncOpenAI(**kwargs)
 
         try:
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=settings.default_llm_model,
                 messages=[
                     {"role": "system", "content": STRICT_GROUNDING_PROMPT},
                     {
@@ -329,7 +332,7 @@ class SelfHealingPipeline:
 
             return {
                 "answer": choice.message.content,
-                "model": "gpt-4o-mini",
+                "model": settings.default_llm_model,
                 "usage": {
                     "prompt_tokens": usage.prompt_tokens,
                     "completion_tokens": usage.completion_tokens,
@@ -341,7 +344,7 @@ class SelfHealingPipeline:
         except Exception as e:
             return {
                 "answer": f"[Strict generation failed: {str(e)}]",
-                "model": "gpt-4o-mini",
+                "model": settings.default_llm_model,
                 "usage": {},
                 "context_used": 0,
             }

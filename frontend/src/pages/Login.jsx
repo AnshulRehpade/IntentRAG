@@ -42,6 +42,19 @@ export default function Login() {
     }
   }
 
+  const handleDemoLogin = () => {
+    // Bypass auth — set a fake token and user for UI exploration
+    localStorage.setItem('token', 'demo-token')
+    localStorage.setItem('user', JSON.stringify({
+      email: 'admin@demo.com',
+      role: 'admin',
+      tenant_name: 'demo',
+      tenant_id: 'demo-tenant-id',
+      user_id: 'demo-user-id',
+    }))
+    navigate('/')
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -108,6 +121,16 @@ export default function Login() {
               {loading ? 'Loading...' : isRegister ? 'Create Account' : 'Sign In'}
             </button>
           </form>
+
+          {/* Demo bypass */}
+          <div className="mt-4">
+            <button
+              onClick={handleDemoLogin}
+              className="w-full bg-gray-100 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-200 transition-colors border border-gray-300 text-sm"
+            >
+              🚀 Enter Demo Mode (no backend required)
+            </button>
+          </div>
 
           <div className="mt-6 text-center">
             <button

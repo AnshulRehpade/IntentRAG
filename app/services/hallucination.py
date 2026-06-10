@@ -38,9 +38,12 @@ class HallucinationChecker:
         self._client: Optional[AsyncOpenAI] = None
 
     def _get_client(self) -> AsyncOpenAI:
-        """Lazy-initialize the async OpenAI client."""
+        """Lazy-initialize the async OpenAI-compatible client."""
         if self._client is None:
-            self._client = AsyncOpenAI(api_key=settings.openai_api_key)
+            kwargs = {"api_key": settings.openai_api_key}
+            if settings.openai_base_url:
+                kwargs["base_url"] = settings.openai_base_url
+            self._client = AsyncOpenAI(**kwargs)
         return self._client
 
     async def check(
@@ -163,16 +166,15 @@ class HallucinationChecker:
         try:
             client = self._get_client()
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=settings.default_llm_model,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=10,
                 temperature=0.0,
-                logprobs=True,
-                top_logprobs=5,
             )
 
+            # Try to get logprobs (not all providers support this)
             choice = response.choices[0]
-            if not choice.logprobs or not choice.logprobs.content:
+            if not hasattr(choice, 'logprobs') or not choice.logprobs or not choice.logprobs.content:
                 return default
 
             # Extract token probabilities
@@ -233,7 +235,7 @@ class HallucinationChecker:
         try:
             client = self._get_client()
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=settings.default_llm_model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.0,
                 max_tokens=300,

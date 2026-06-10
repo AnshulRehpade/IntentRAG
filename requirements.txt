@@ -52,8 +52,7 @@ qdrant-client>=1.9.0
 # ============================================================
 llama-index-core>=0.10.0
 llama-index-vector-stores-qdrant>=0.2.0
-llama-index-embeddings-openai>=0.1.0
-llama-index-llms-openai>=0.1.0
+llama-index-embeddings-huggingface>=0.2.0
 
 # ============================================================
 # v2 — Reranking

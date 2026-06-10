@@ -19,6 +19,8 @@ class Settings(BaseSettings):
 
     # --- OpenAI ---
     openai_api_key: str = ""
+    openai_base_url: str = ""  # Leave empty for OpenAI, set for Groq/other providers
+    default_llm_model: str = "llama-3.3-70b-versatile"  # Groq model
 
     # --- Cohere ---
     cohere_api_key: str = ""

@@ -45,17 +45,20 @@ INTENT_PROMPTS = {
 
 class GeneratorService:
     """
-    Generates the final answer using OpenAI GPT with retrieved + reranked context.
+    Generates the final answer using an LLM with retrieved + reranked context.
+    Supports OpenAI, Groq, or any OpenAI-compatible API.
     """
 
-    def __init__(self, model: str = "gpt-4o-mini"):
+    def __init__(self):
         self._client: Optional[AsyncOpenAI] = None
-        self._model = model
 
     def _get_client(self) -> AsyncOpenAI:
-        """Lazy-initialize the async OpenAI client."""
+        """Lazy-initialize the async OpenAI-compatible client."""
         if self._client is None:
-            self._client = AsyncOpenAI(api_key=settings.openai_api_key)
+            kwargs = {"api_key": settings.openai_api_key}
+            if settings.openai_base_url:
+                kwargs["base_url"] = settings.openai_base_url
+            self._client = AsyncOpenAI(**kwargs)
         return self._client
 
     async def generate(
@@ -84,8 +87,8 @@ class GeneratorService:
         """
         if not settings.openai_api_key:
             return {
-                "answer": "[OpenAI API key not configured]",
-                "model": self._model,
+                "answer": "[LLM API key not configured]",
+                "model": settings.default_llm_model,
                 "usage": {},
                 "context_used": 0,
             }
@@ -93,7 +96,7 @@ class GeneratorService:
         if not context_chunks:
             return {
                 "answer": "I couldn't find any relevant information in the knowledge base to answer your question.",
-                "model": self._model,
+                "model": settings.default_llm_model,
                 "usage": {},
                 "context_used": 0,
             }
@@ -120,7 +123,7 @@ class GeneratorService:
 
         try:
             client = self._get_client()
-            use_model = model or self._model
+            use_model = model or settings.default_llm_model
 
             response = await client.chat.completions.create(
                 model=use_model,
@@ -146,7 +149,7 @@ class GeneratorService:
         except Exception as e:
             return {
                 "answer": f"[Generation failed: {str(e)}]",
-                "model": self._model,
+                "model": settings.default_llm_model,
                 "usage": {},
                 "context_used": len(context_chunks),
             }

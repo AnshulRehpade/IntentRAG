@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BarChart3, AlertTriangle, TrendingUp, Lightbulb } from 'lucide-react'
-import api from '../api'
+import api, { isDemoMode } from '../api'
+import { MOCK_ANALYTICS } from '../demo'
 
 export default function Analytics() {
   const [data, setData] = useState(null)
@@ -12,6 +13,11 @@ export default function Analytics() {
   }, [])
 
   const fetchAnalytics = async () => {
+    if (isDemoMode()) {
+      setData(MOCK_ANALYTICS)
+      setLoading(false)
+      return
+    }
     try {
       const { data: resp } = await api.get('/analytics/hallucinations')
       if (resp.success) {
