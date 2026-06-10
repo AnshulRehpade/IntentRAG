@@ -7,7 +7,6 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.services.retriever import retriever_service
 
 router = APIRouter()
 
@@ -32,8 +31,11 @@ async def health_check(db: AsyncSession = Depends(get_db)):
 
     # Check Qdrant
     try:
-        if retriever_service.is_healthy():
-            services["qdrant"] = "up"
+        from qdrant_client import QdrantClient
+        from app.core.config import settings
+        qclient = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port, timeout=2)
+        qclient.get_collections()
+        services["qdrant"] = "up"
     except Exception:
         services["qdrant"] = "down"
 

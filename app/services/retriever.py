@@ -21,6 +21,7 @@ from llama_index.core.vector_stores.types import (
 )
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient, models
+from qdrant_client import AsyncQdrantClient
 
 from app.core.config import settings
 
@@ -53,6 +54,9 @@ class RetrieverService:
         self._qdrant_client = QdrantClient(
             host=settings.qdrant_host, port=settings.qdrant_port
         )
+        self._async_client = AsyncQdrantClient(
+            host=settings.qdrant_host, port=settings.qdrant_port
+        )
 
         # Initialize embedding model (local HuggingFace — free, no API key)
         from llama_index.core.embeddings import resolve_embed_model
@@ -68,6 +72,7 @@ class RetrieverService:
             # Create QdrantVectorStore
             vector_store = QdrantVectorStore(
                 client=self._qdrant_client,
+                aclient=self._async_client,
                 collection_name=collection_name,
             )
             self._vector_stores[category] = vector_store

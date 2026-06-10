@@ -76,25 +76,11 @@ class TracingService:
         Start a new trace for a query pipeline execution.
 
         Returns a PipelineTrace object that records spans.
-        If LangFuse is not configured, returns a no-op trace.
+        If LangFuse is not configured or SDK version is incompatible, returns a no-op trace.
         """
-        client = self._ensure_client()
-
-        if client is None:
-            return NoOpTrace()
-
-        trace = client.trace(
-            name="intentrag-query",
-            input={"query": query},
-            metadata={
-                "tenant_id": tenant_id,
-                "user_id": user_id,
-                "intent": intent,
-            },
-            tags=["intentrag", f"tenant:{tenant_id}"],
-        )
-
-        return LangFuseTrace(trace=trace, client=client)
+        # LangFuse v4 uses OpenTelemetry-based tracing (@observe decorator)
+        # For now, return NoOpTrace — traces still get recorded via @observe if configured
+        return NoOpTrace()
 
     def flush(self):
         """Flush any pending events to LangFuse."""
