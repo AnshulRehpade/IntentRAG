@@ -11,10 +11,16 @@ import os
 from pathlib import Path
 from typing import Optional
 
-import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-
 from app.core.config import settings
+
+# PyTorch/transformers are optional — only needed if RoBERTa model is present
+_torch_available = False
+try:
+    import torch
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+    _torch_available = True
+except ImportError:
+    pass
 
 # Map numeric labels to intent category names used across the system
 LABEL_TO_INTENT = {
@@ -60,6 +66,14 @@ class IntentClassifier:
             return
 
         model_path = Path(self._model_path)
+
+        if not _torch_available:
+            print(
+                "⚠️  PyTorch not installed — using heuristic intent classifier. "
+                "Install torch + transformers for RoBERTa model."
+            )
+            self._loaded = True
+            return
 
         if not model_path.exists():
             print(
