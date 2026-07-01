@@ -56,7 +56,7 @@ export default function Ingest() {
             <FileText size={32} className="mx-auto text-gray-400 mb-2" />
             <input
               type="file"
-              accept=".txt,.md,.csv"
+              accept=".txt,.md,.csv,.pdf,.docx"
               onChange={(e) => setFile(e.target.files[0])}
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
             />

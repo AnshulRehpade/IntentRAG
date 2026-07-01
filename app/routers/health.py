@@ -33,7 +33,10 @@ async def health_check(db: AsyncSession = Depends(get_db)):
     try:
         from qdrant_client import QdrantClient
         from app.core.config import settings
-        qclient = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port, timeout=2)
+        if settings.qdrant_api_key:
+            qclient = QdrantClient(url=f"https://{settings.qdrant_host}", api_key=settings.qdrant_api_key, timeout=5)
+        else:
+            qclient = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port, timeout=2)
         qclient.get_collections()
         services["qdrant"] = "up"
     except Exception:

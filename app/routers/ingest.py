@@ -1,5 +1,7 @@
 """
 Document ingestion endpoint — upload, chunk, embed, store (protected).
+
+Supported formats: .txt, .md, .csv, .pdf, .docx
 """
 
 from typing import Optional
@@ -17,6 +19,29 @@ router = APIRouter()
 # Allowed intent categories
 VALID_INTENTS = {"factual", "person", "time", "location", "explanation", "other"}
 
+# Supported file types
+SUPPORTED_EXTENSIONS = {".txt", ".md", ".csv", ".pdf", ".docx"}
+
+
+def extract_text_from_pdf(content: bytes) -> str:
+    """Extract text from a PDF file using PyMuPDF."""
+    import fitz  # pymupdf
+
+    text_parts = []
+    with fitz.open(stream=content, filetype="pdf") as doc:
+        for page in doc:
+            text_parts.append(page.get_text())
+    return "\n".join(text_parts)
+
+
+def extract_text_from_docx(content: bytes) -> str:
+    """Extract text from a DOCX file using python-docx."""
+    import io
+    from docx import Document as DocxDocument
+
+    doc = DocxDocument(io.BytesIO(content))
+    return "\n".join(para.text for para in doc.paragraphs if para.text.strip())
+
 
 @router.post("")
 async def ingest_document(
@@ -29,7 +54,7 @@ async def ingest_document(
     """
     Upload a document, chunk it, generate embeddings, and store in Qdrant.
 
-    - File content is read as UTF-8 text
+    Supported formats: .txt, .md, .csv, .pdf, .docx
     - Chunks stored in the intent_category collection
     - Each chunk carries tenant_id as metadata for isolation
     - Document record saved to PostgreSQL for tracking
@@ -42,25 +67,63 @@ async def ingest_document(
             return {
                 "success": False,
                 "data": None,
-                "error": f"Invalid intent_category '{intent_category}'. Must be one of: {VALID_INTENTS}",
+                "error": f"Invalid intent_category '{intent_category}'. Must be one of: {sorted(VALID_INTENTS)}",
+            }
+
+        # Check file extension
+        filename = file.filename or "unknown.txt"
+        ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+        if ext not in SUPPORTED_EXTENSIONS:
+            return {
+                "success": False,
+                "data": None,
+                "error": f"Unsupported file type '{ext}'. Supported: {sorted(SUPPORTED_EXTENSIONS)}",
             }
 
         # Read file content
         content = await file.read()
-        try:
-            text_content = content.decode("utf-8")
-        except UnicodeDecodeError:
-            return {
-                "success": False,
-                "data": None,
-                "error": "File must be UTF-8 encoded text",
-            }
+
+        # Extract text based on file type
+        if ext == ".pdf":
+            try:
+                text_content = extract_text_from_pdf(content)
+            except Exception as e:
+                return {
+                    "success": False,
+                    "data": None,
+                    "error": f"Failed to parse PDF: {str(e)}",
+                }
+        elif ext == ".docx":
+            try:
+                text_content = extract_text_from_docx(content)
+            except ImportError:
+                return {
+                    "success": False,
+                    "data": None,
+                    "error": "python-docx package not installed. Run: pip install python-docx",
+                }
+            except Exception as e:
+                return {
+                    "success": False,
+                    "data": None,
+                    "error": f"Failed to parse DOCX: {str(e)}",
+                }
+        else:
+            # Plain text files (.txt, .md, .csv)
+            try:
+                text_content = content.decode("utf-8")
+            except UnicodeDecodeError:
+                return {
+                    "success": False,
+                    "data": None,
+                    "error": "File must be UTF-8 encoded text",
+                }
 
         if not text_content.strip():
             return {
                 "success": False,
                 "data": None,
-                "error": "File is empty",
+                "error": "File is empty or contains no extractable text",
             }
 
         # Save document record to PostgreSQL
@@ -68,7 +131,7 @@ async def ingest_document(
             tenant_id=user.tenant_id,
             intent_category=intent_category,
             content=text_content[:5000],  # Store first 5k chars for reference
-            source=source or file.filename,
+            source=source or filename,
         )
         db.add(doc)
         await db.flush()
@@ -78,12 +141,12 @@ async def ingest_document(
             content=text_content,
             intent_category=intent_category,
             tenant_id=user.tenant_id,
-            source=source or file.filename,
+            source=source or filename,
             doc_id=str(doc.doc_id),
         )
 
         # Update document with embedding reference
-        doc.embedding_id = ",".join(result["node_ids"][:5])  # Store first 5 node IDs
+        doc.embedding_id = ",".join(result["node_ids"][:5])
         await db.commit()
 
         return {
@@ -92,9 +155,11 @@ async def ingest_document(
                 "doc_id": str(doc.doc_id),
                 "tenant_id": user.tenant_id,
                 "intent_category": intent_category,
-                "filename": file.filename,
+                "filename": filename,
+                "file_type": ext,
                 "chunks_created": result["chunks_created"],
-                "source": source or file.filename,
+                "text_length": len(text_content),
+                "source": source or filename,
             },
             "error": None,
         }

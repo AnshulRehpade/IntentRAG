@@ -1,0 +1,21 @@
+Java Programming Language
+
+Java is a high-level, class-based, object-oriented programming language created by James Gosling at Sun Microsystems. It was first released in 1995. Java was designed with the principle "Write Once, Run Anywhere" (WORA), meaning compiled Java code can run on any platform that supports Java without recompilation.
+
+James Gosling started the Java language project in June 1991. The language was initially called "Oak" after an oak tree that stood outside Gosling's office. Later the project went by the name "Green" and was finally renamed Java, after Java coffee from Indonesia.
+
+Sun Microsystems released the first public implementation of Java 1.0 in 1996. It promised WORA functionality, providing no-cost run-times on popular platforms. Oracle Corporation acquired Sun Microsystems in 2010 and has since maintained Java.
+
+Key features of Java include automatic memory management through garbage collection, strong type checking at compile time, platform independence through the Java Virtual Machine (JVM), multithreading support, and a rich standard library.
+
+Java is used extensively in enterprise software development, Android mobile app development, web applications (using frameworks like Spring Boot), big data processing (Apache Hadoop, Spark), and financial trading systems.
+
+Major Java versions and their release dates:
+- Java 8 (March 2014) - introduced Lambda expressions and Stream API
+- Java 11 (September 2018) - first Long-Term Support release under new schedule
+- Java 17 (September 2021) - second major LTS release
+- Java 21 (September 2023) - latest LTS with virtual threads (Project Loom)
+
+The Spring Framework is the most popular Java enterprise framework. Spring Boot, released in 2014, simplified Java application development with auto-configuration and embedded servers. Companies using Java include Google, Amazon, Netflix, Uber, Airbnb, and most major banks.
+
+Java competes with languages like Kotlin (which also runs on the JVM), C# (.NET platform), and Python. Despite being nearly 30 years old, Java consistently ranks in the top 3 most popular programming languages worldwide.

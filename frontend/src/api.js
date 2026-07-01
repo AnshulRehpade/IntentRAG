@@ -1,5 +1,7 @@
 import axios from 'axios'
 
+// In development: proxy through Vite (/api → localhost:8000)
+// In production: proxy through Vercel rewrites (/api → Render backend)
 const api = axios.create({
   baseURL: '/api',
 })

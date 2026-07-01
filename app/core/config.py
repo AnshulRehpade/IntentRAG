@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     # --- Qdrant ---
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
+    qdrant_api_key: str = ""  # Required for Qdrant Cloud
+    qdrant_use_https: bool = False  # True for Qdrant Cloud
 
     # --- LLM Provider (Groq via OpenAI-compatible SDK) ---
     groq_api_key: str = ""

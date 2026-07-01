@@ -108,6 +108,7 @@ class SelfHealingPipeline:
 
         # If not hallucinated, check if the answer is a "can't find info" response
         # In that case, try web search even though it's not technically hallucinated
+        # BUT only if retrieval quality was actually poor (don't override good KB results)
         answer_lower = result["answer"].lower()
         is_no_info_answer = any(phrase in answer_lower for phrase in [
             "does not mention", "doesn't mention", "no information",
@@ -116,7 +117,9 @@ class SelfHealingPipeline:
             "additional context", "additional information would be needed",
         ])
 
-        if not hallucination.get("is_hallucinated", False) and not is_no_info_answer:
+        retrieval_was_good = hallucination.get("retrieval_quality") != "poor"
+
+        if not hallucination.get("is_hallucinated", False) and (not is_no_info_answer or retrieval_was_good):
             result["healing_metadata"] = {
                 "attempts": 1,
                 "was_healed": False,
@@ -127,8 +130,8 @@ class SelfHealingPipeline:
             }
             return result
 
-        # --- Try web search if KB doesn't have the answer ---
-        if is_no_info_answer or hallucination.get("retrieval_quality") == "poor":
+        # --- Try web search if KB genuinely doesn't have the answer ---
+        if is_no_info_answer and not retrieval_was_good:
             web_result = await self._try_web_fallback(query, intent)
             if web_result is not None:
                 web_result["healing_metadata"] = {
@@ -314,6 +317,7 @@ class SelfHealingPipeline:
     ) -> dict:
         """
         Run a single pass of the retrieve → rerank → generate → check pipeline.
+        If primary intent retrieval is poor, automatically broadens to all collections.
         """
         use_query = expanded_query or query
 
@@ -325,15 +329,29 @@ class SelfHealingPipeline:
             top_k=top_k,
         )
 
-        # Optionally retrieve from adjacent intents
-        if additional_intents:
+        # If primary retrieval is poor, search ALL other collections
+        max_score = max((c.get("score", 0) for c in retrieved_chunks), default=0)
+        if max_score < 0.2 or not retrieved_chunks:
+            all_intents = ["factual", "person", "time", "location", "explanation", "other"]
+            for other_intent in all_intents:
+                if other_intent != intent:
+                    other_chunks = await retriever_service.retrieve(
+                        query=use_query,
+                        intent=other_intent,
+                        tenant_id=tenant_id,
+                        top_k=top_k // 2,
+                    )
+                    retrieved_chunks.extend(other_chunks)
+
+        # Optionally retrieve from specified additional intents
+        elif additional_intents:
             for adj_intent in additional_intents:
                 if adj_intent != intent:
                     adj_chunks = await retriever_service.retrieve(
                         query=use_query,
                         intent=adj_intent,
                         tenant_id=tenant_id,
-                        top_k=top_k // 2,  # Half allocation for adjacent
+                        top_k=top_k // 2,
                     )
                     retrieved_chunks.extend(adj_chunks)
 

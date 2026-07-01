@@ -54,8 +54,9 @@ async def hallucination_analytics(
         )
         overall = total_result.mappings().first()
 
-        total_queries = overall["total"] or 0
-        total_hallucinated = overall["hallucinated"] or 0
+        total_queries = int(overall["total"] or 0)
+        total_hallucinated = int(overall["hallucinated"] or 0)
+        avg_latency = float(overall["avg_latency"] or 0)
         hallucination_rate = (
             total_hallucinated / total_queries if total_queries > 0 else 0.0
         )
@@ -78,8 +79,8 @@ async def hallucination_analytics(
 
         by_intent = []
         for row in intent_result.mappings():
-            intent_total = row["total"] or 0
-            intent_hallucinated = row["hallucinated"] or 0
+            intent_total = int(row["total"] or 0)
+            intent_hallucinated = int(row["hallucinated"] or 0)
             by_intent.append({
                 "intent": row["intent"],
                 "total_queries": intent_total,
@@ -87,7 +88,7 @@ async def hallucination_analytics(
                 "hallucination_rate": round(
                     intent_hallucinated / intent_total if intent_total > 0 else 0.0, 4
                 ),
-                "avg_latency_ms": round(row["avg_latency"] or 0, 1),
+                "avg_latency_ms": round(float(row["avg_latency"] or 0), 1),
             })
 
         # --- Latency comparison ---
@@ -107,10 +108,10 @@ async def hallucination_analytics(
         for row in latency_result.mappings():
             key = "hallucinated" if row["hallucination_flag"] else "clean"
             latency_comparison[key] = {
-                "count": row["count"],
-                "avg_latency_ms": round(row["avg_latency"] or 0, 1),
-                "min_latency_ms": row["min_latency"],
-                "max_latency_ms": row["max_latency"],
+                "count": int(row["count"]),
+                "avg_latency_ms": round(float(row["avg_latency"] or 0), 1),
+                "min_latency_ms": int(row["min_latency"] or 0),
+                "max_latency_ms": int(row["max_latency"] or 0),
             }
 
         # --- Recent hallucinated queries (for debugging) ---
@@ -151,7 +152,7 @@ async def hallucination_analytics(
                     "total_hallucinations": total_hallucinated,
                     "hallucination_rate": round(hallucination_rate, 4),
                     "clean_answers": total_queries - total_hallucinated,
-                    "avg_latency_ms": round(overall["avg_latency"] or 0, 1),
+                    "avg_latency_ms": round(avg_latency, 1),
                 },
                 "by_intent": by_intent,
                 "latency_comparison": latency_comparison,

@@ -51,12 +51,24 @@ class RetrieverService:
             return
 
         # Initialize Qdrant client
-        self._qdrant_client = QdrantClient(
-            host=settings.qdrant_host, port=settings.qdrant_port
-        )
-        self._async_client = AsyncQdrantClient(
-            host=settings.qdrant_host, port=settings.qdrant_port
-        )
+        if settings.qdrant_api_key:
+            # Qdrant Cloud
+            self._qdrant_client = QdrantClient(
+                url=f"https://{settings.qdrant_host}",
+                api_key=settings.qdrant_api_key,
+            )
+            self._async_client = AsyncQdrantClient(
+                url=f"https://{settings.qdrant_host}",
+                api_key=settings.qdrant_api_key,
+            )
+        else:
+            # Local Docker
+            self._qdrant_client = QdrantClient(
+                host=settings.qdrant_host, port=settings.qdrant_port
+            )
+            self._async_client = AsyncQdrantClient(
+                host=settings.qdrant_host, port=settings.qdrant_port
+            )
 
         # Initialize embedding model (local HuggingFace — free, no API key)
         from llama_index.core.embeddings import resolve_embed_model

@@ -1,0 +1,46 @@
+# Render Blueprint — deploy backend + Postgres
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: intentrag-api
+    runtime: docker
+    repo: https://github.com/AnshulRehpade/IntentRAG
+    branch: main
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: GROQ_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: DEFAULT_LLM_MODEL
+        value: llama-3.3-70b-versatile
+      - key: DATABASE_URL
+        fromDatabase:
+          name: intentrag-db
+          property: connectionURI
+      - key: QDRANT_HOST
+        sync: false  # Set to your Qdrant Cloud URL
+      - key: QDRANT_PORT
+        value: "6333"
+      - key: COHERE_API_KEY
+        sync: false
+      - key: LANGFUSE_PUBLIC_KEY
+        sync: false
+      - key: LANGFUSE_SECRET_KEY
+        sync: false
+      - key: LANGFUSE_HOST
+        value: https://cloud.langfuse.com
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRE_MINUTES
+        value: "60"
+    healthCheckPath: /health
+
+databases:
+  - name: intentrag-db
+    plan: free
+    databaseName: intentrag
+    user: intentrag_user
