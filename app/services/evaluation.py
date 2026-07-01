@@ -8,24 +8,32 @@ Metrics computed:
 - Context Recall: Does the context contain the ground truth?
 
 Uses the RAGAS library with OpenAI as the evaluation LLM.
+NOTE: ragas + datasets are optional dependencies. If not installed,
+the /eval endpoint returns a helpful error instead of crashing.
 """
 
 from typing import Optional
-
-from datasets import Dataset
-from ragas import evaluate
-from ragas.metrics import (
-    answer_relevancy,
-    context_precision,
-    context_recall,
-    faithfulness,
-)
 
 from app.core.config import settings
 from app.services.classifier import intent_classifier
 from app.services.generator import generator_service
 from app.services.reranker import reranker_service
 from app.services.retriever import retriever_service
+
+# Lazy import — ragas is heavy and optional in production
+_ragas_available = False
+try:
+    from datasets import Dataset
+    from ragas import evaluate
+    from ragas.metrics import (
+        answer_relevancy,
+        context_precision,
+        context_recall,
+        faithfulness,
+    )
+    _ragas_available = True
+except ImportError:
+    pass
 
 
 class EvaluationService:
@@ -56,6 +64,13 @@ class EvaluationService:
                 "errors": [str],
             }
         """
+        if not _ragas_available:
+            return {
+                "aggregate_scores": {},
+                "per_item_scores": [],
+                "num_items": 0,
+                "errors": ["RAGAS not installed. This feature requires: pip install ragas datasets"],
+            }
         questions = []
         answers = []
         contexts = []

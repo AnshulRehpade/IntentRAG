@@ -41,6 +41,10 @@ ddgs>=7.0.0
 # PDF parsing
 pymupdf>=1.24.0
 
+# Evaluation (optional — only needed for /eval endpoint)
+# Install locally with: pip install ragas datasets
+# Not included in prod to save memory
+
 # Utilities
 python-dotenv>=1.0.0
 httpx>=0.27.0
