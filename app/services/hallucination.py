@@ -40,9 +40,9 @@ class HallucinationChecker:
     def _get_client(self) -> AsyncOpenAI:
         """Lazy-initialize the async OpenAI-compatible client."""
         if self._client is None:
-            kwargs = {"api_key": settings.openai_api_key}
-            if settings.openai_base_url:
-                kwargs["base_url"] = settings.openai_base_url
+            kwargs = {"api_key": settings.groq_api_key}
+            if settings.groq_base_url:
+                kwargs["base_url"] = settings.groq_base_url
             self._client = AsyncOpenAI(**kwargs)
         return self._client
 
@@ -76,7 +76,7 @@ class HallucinationChecker:
                 "details": str,
             }
         """
-        if not settings.openai_api_key or not answer:
+        if not settings.groq_api_key or not answer:
             return self._default_result("No API key or empty answer — skipping check")
 
         # --- Method 1: Retrieval Confidence Check ---

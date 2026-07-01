@@ -55,9 +55,9 @@ class GeneratorService:
     def _get_client(self) -> AsyncOpenAI:
         """Lazy-initialize the async OpenAI-compatible client."""
         if self._client is None:
-            kwargs = {"api_key": settings.openai_api_key}
-            if settings.openai_base_url:
-                kwargs["base_url"] = settings.openai_base_url
+            kwargs = {"api_key": settings.groq_api_key}
+            if settings.groq_base_url:
+                kwargs["base_url"] = settings.groq_base_url
             self._client = AsyncOpenAI(**kwargs)
         return self._client
 
@@ -85,7 +85,7 @@ class GeneratorService:
                 "context_used": int  # number of chunks fed to the model
             }
         """
-        if not settings.openai_api_key:
+        if not settings.groq_api_key:
             return {
                 "answer": "[LLM API key not configured]",
                 "model": settings.default_llm_model,

@@ -17,10 +17,10 @@ class Settings(BaseSettings):
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
 
-    # --- OpenAI ---
-    openai_api_key: str = ""
-    openai_base_url: str = ""  # Leave empty for OpenAI, set for Groq/other providers
-    default_llm_model: str = "llama-3.3-70b-versatile"  # Groq model
+    # --- LLM Provider (Groq via OpenAI-compatible SDK) ---
+    groq_api_key: str = ""
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    default_llm_model: str = "llama-3.3-70b-versatile"
 
     # --- Cohere ---
     cohere_api_key: str = ""

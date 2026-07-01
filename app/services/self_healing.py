@@ -295,7 +295,7 @@ class SelfHealingPipeline:
         from openai import AsyncOpenAI
         from app.core.config import settings
 
-        if not settings.openai_api_key:
+        if not settings.groq_api_key:
             return {"answer": "[No API key]", "model": settings.default_llm_model, "usage": {}, "context_used": 0}
 
         # Build context
@@ -304,9 +304,9 @@ class SelfHealingPipeline:
             context_parts.append(f"[{i}] {chunk['content'].strip()}")
         context_str = "\n\n".join(context_parts)
 
-        kwargs = {"api_key": settings.openai_api_key}
-        if settings.openai_base_url:
-            kwargs["base_url"] = settings.openai_base_url
+        kwargs = {"api_key": settings.groq_api_key}
+        if settings.groq_base_url:
+            kwargs["base_url"] = settings.groq_base_url
         client = AsyncOpenAI(**kwargs)
 
         try:
