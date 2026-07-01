@@ -18,7 +18,7 @@ services:
       - key: DATABASE_URL
         fromDatabase:
           name: intentrag-db
-          property: connectionURI
+          property: connectionString
       - key: QDRANT_HOST
         sync: false  # Set to your Qdrant Cloud URL
       - key: QDRANT_PORT
