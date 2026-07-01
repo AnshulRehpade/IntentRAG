@@ -1,0 +1,21 @@
+Programming Language Creators
+
+James Gosling created the Java programming language. He is a Canadian computer scientist born on May 19, 1955. He started developing Java in 1991 at Sun Microsystems. The language was originally called "Oak" and was renamed to Java in 1995. Gosling is known as the "Father of Java." He worked at Sun Microsystems until Oracle acquired it in 2010, then briefly at Google, and later at Amazon Web Services.
+
+Brendan Eich created JavaScript in 1995. He designed and implemented the first version in just 10 days while working at Netscape Communications. JavaScript was originally called Mocha, then LiveScript, before being renamed to JavaScript. Eich later co-founded Mozilla and served as CEO briefly in 2014. He then founded Brave Software, which makes the Brave web browser.
+
+Bjarne Stroustrup created C++ in 1979 at Bell Labs. He is a Danish computer scientist born on December 30, 1950. C++ was designed as an extension of the C programming language with object-oriented features. Stroustrup is currently a professor at Columbia University and a technical fellow at Morgan Stanley.
+
+Dennis Ritchie created the C programming language in 1972 at Bell Labs. He also co-created the Unix operating system with Ken Thompson. Ritchie received the Turing Award in 1983 along with Thompson. He passed away on October 12, 2011.
+
+Ken Thompson co-created the Unix operating system and the B programming language at Bell Labs. He later co-created the Go programming language at Google in 2007 along with Rob Pike and Robert Griesemer. Thompson won the Turing Award in 1983.
+
+Rob Pike co-created the Go programming language at Google in 2007. He previously worked at Bell Labs where he co-created the Plan 9 operating system and the UTF-8 encoding (with Ken Thompson). Pike is also known for creating the Acme text editor.
+
+Yukihiro Matsumoto (known as "Matz") created Ruby in 1995. He is a Japanese computer scientist who designed Ruby to be productive and fun to use. Ruby became widely popular with the release of the Ruby on Rails web framework in 2004 by David Heinemeier Hansson.
+
+Rasmus Lerdorf created PHP in 1994. Originally it stood for "Personal Home Page" tools. PHP became one of the most widely used server-side languages for web development. It powers major platforms including WordPress, Facebook (early versions), and Wikipedia.
+
+Anders Hejlsberg created C# at Microsoft in 2000. He is a Danish software engineer who previously created Turbo Pascal and Delphi at Borland. He also led the development of TypeScript at Microsoft starting in 2012. TypeScript adds static typing to JavaScript.
+
+Chris Lattner created the Swift programming language at Apple in 2010, with public release in 2014. He also created the LLVM compiler infrastructure and the Clang C/C++ compiler. After Apple, he worked at Tesla, Google Brain, and founded Modular AI where he created the Mojo programming language.
