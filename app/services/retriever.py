@@ -70,9 +70,9 @@ class RetrieverService:
                 host=settings.qdrant_host, port=settings.qdrant_port
             )
 
-        # Initialize embedding model (local HuggingFace — free, no API key)
-        from llama_index.core.embeddings import resolve_embed_model
-        self._embed_model = resolve_embed_model("local:sentence-transformers/all-MiniLM-L6-v2")
+        # Initialize embedding model (FastEmbed — lightweight ONNX, no PyTorch needed)
+        from llama_index.embeddings.fastembed import FastEmbedEmbedding
+        self._embed_model = FastEmbedEmbedding(model_name="BAAI/bge-small-en-v1.5")
 
         # Create collections and indexes for each intent category
         for category in INTENT_CATEGORIES:
