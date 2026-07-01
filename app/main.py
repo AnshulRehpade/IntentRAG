@@ -43,6 +43,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "https://intentrag.vercel.app",
+        "https://intent-rag.vercel.app",
         "https://intent-ibl6ir9uj-anshul25.vercel.app",
         "https://*.vercel.app",
     ],
