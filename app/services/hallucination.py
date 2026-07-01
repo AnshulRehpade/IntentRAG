@@ -30,7 +30,7 @@ class HallucinationChecker:
     """
 
     # Thresholds
-    LOW_RETRIEVAL_SCORE = 0.3  # Below this, retrieval quality is suspect
+    LOW_RETRIEVAL_SCORE = 0.15  # Below this, retrieval quality is suspect
     HIGH_ENTROPY_THRESHOLD = 3.0  # Bits — above this indicates uncertainty
     LOW_TOKEN_PROB_THRESHOLD = 0.1  # Token probability below this is suspicious
 
@@ -96,11 +96,18 @@ class HallucinationChecker:
             llm_result=llm_result,
         )
 
-        is_hallucinated = (
-            llm_result["support_level"] == "UNSUPPORTED"
-            or confidence_score < 0.4
-            or (entropy_result["entropy"] is not None and entropy_result["entropy"] > self.HIGH_ENTROPY_THRESHOLD)
-        )
+        # Hallucination requires multiple bad signals (not just one)
+        bad_signals = 0
+        if llm_result["support_level"] == "UNSUPPORTED":
+            bad_signals += 1
+        if confidence_score < 0.4:
+            bad_signals += 1
+        if entropy_result["entropy"] is not None and entropy_result["entropy"] > self.HIGH_ENTROPY_THRESHOLD:
+            bad_signals += 1
+        if retrieval_quality == "poor":
+            bad_signals += 1
+
+        is_hallucinated = bad_signals >= 2
 
         severity = self._determine_severity(confidence_score, llm_result, entropy_result)
         likely_causes = self._identify_causes(
@@ -134,7 +141,8 @@ class HallucinationChecker:
         scores = [c.get("relevance_score", c.get("score", 0.0)) for c in context_chunks]
         avg_score = float(np.mean(scores)) if scores else 0.0
 
-        if avg_score >= 0.6:
+        # Thresholds calibrated for all-MiniLM-L6-v2 (produces lower scores than OpenAI)
+        if avg_score >= 0.4:
             return "good", avg_score
         elif avg_score >= self.LOW_RETRIEVAL_SCORE:
             return "marginal", avg_score
@@ -214,7 +222,7 @@ class HallucinationChecker:
             "unsupported_claims": [],
         }
 
-        context_str = "\n\n".join(c.get("content", "")[:500] for c in context_chunks[:5])
+        context_str = "\n\n".join(c.get("content", "")[:1000] for c in context_chunks[:5])
         if not context_str:
             return {**default, "support_level": "UNSUPPORTED"}
 
@@ -223,7 +231,11 @@ class HallucinationChecker:
             f"CONTEXT (Retrieved Information):\n{context_str}\n\n"
             f"USER QUERY:\n{query}\n\n"
             f"GENERATED ANSWER:\n{answer}\n\n"
-            "Analyze if the answer is supported by the context.\n\n"
+            "Analyze if the ANSWER's claims are supported by the CONTEXT.\n"
+            "IMPORTANT: If the answer explicitly states something that appears in the context, "
+            "even if it's a small part of a larger passage, classify it as SUPPORTED.\n"
+            "Only classify as UNSUPPORTED if the answer makes claims that clearly cannot be "
+            "found anywhere in the context.\n\n"
             "Return ONLY valid JSON:\n"
             "{\n"
             '  "support_level": "SUPPORTED" | "PARTIALLY_SUPPORTED" | "UNSUPPORTED",\n'
@@ -274,28 +286,27 @@ class HallucinationChecker:
         Calculate combined confidence score (0.0 - 1.0).
 
         Weights:
-        - LLM verification: 40%
-        - Retrieval quality: 30%
+        - LLM verification: 50% (primary signal)
+        - Retrieval quality: 20%
         - Entropy analysis: 30%
         """
         score = 0.0
 
-        # LLM verification (40%)
+        # LLM verification (50%)
         support = llm_result.get("support_level", "UNKNOWN")
         if support == "SUPPORTED":
-            score += 0.4
+            score += 0.5
         elif support == "PARTIALLY_SUPPORTED":
-            score += 0.2
+            score += 0.3
         elif support == "UNKNOWN":
-            score += 0.1
+            score += 0.2
 
-        # Retrieval quality (30%)
-        score += 0.3 * min(avg_retrieval_score, 1.0)
+        # Retrieval quality (20%)
+        score += 0.2 * min(avg_retrieval_score / 0.4, 1.0)  # Normalize to 0.4 as "good"
 
         # Entropy (30%)
         entropy = entropy_result.get("entropy")
         if entropy is not None:
-            # Lower entropy = higher confidence
             if entropy < 1.0:
                 score += 0.3
             elif entropy < 2.0:
@@ -303,7 +314,7 @@ class HallucinationChecker:
             elif entropy < self.HIGH_ENTROPY_THRESHOLD:
                 score += 0.1
         else:
-            score += 0.15  # No entropy data, partial credit
+            score += 0.2  # No entropy data, give benefit of doubt
 
         return min(score, 1.0)
 

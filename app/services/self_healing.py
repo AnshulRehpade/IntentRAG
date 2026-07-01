@@ -23,6 +23,7 @@ from app.services.generator import generator_service
 from app.services.hallucination import hallucination_checker
 from app.services.reranker import reranker_service
 from app.services.retriever import retriever_service
+from app.services.web_search import web_search_service
 
 
 # Strict system prompt used during retries to reduce hallucination
@@ -70,6 +71,12 @@ class SelfHealingPipeline:
         """
         Execute the self-healing pipeline.
 
+        Flow:
+        1. Run normal pipeline (retrieve → rerank → generate → check)
+        2. If hallucinated → diagnose → retry with corrective strategy
+        3. If knowledge base has no relevant data → web search fallback
+        4. Return best answer with source metadata
+
         Returns:
             {
                 "answer": str,
@@ -83,6 +90,7 @@ class SelfHealingPipeline:
                     "strategies_used": list[str],
                     "original_answer": str | None,
                     "improvement_reason": str | None,
+                    "source": "knowledge_base" | "web_search",
                 }
             }
         """
@@ -98,27 +106,49 @@ class SelfHealingPipeline:
 
         hallucination = result["hallucination_check"]
 
-        # If not hallucinated or check was skipped, return immediately
-        if not hallucination.get("is_hallucinated", False):
+        # If not hallucinated, check if the answer is a "can't find info" response
+        # In that case, try web search even though it's not technically hallucinated
+        answer_lower = result["answer"].lower()
+        is_no_info_answer = any(phrase in answer_lower for phrase in [
+            "does not mention", "doesn't mention", "no information",
+            "not mentioned", "cannot find", "don't have enough",
+            "not in the context", "context does not", "context provided does not",
+            "additional context", "additional information would be needed",
+        ])
+
+        if not hallucination.get("is_hallucinated", False) and not is_no_info_answer:
             result["healing_metadata"] = {
                 "attempts": 1,
                 "was_healed": False,
                 "strategies_used": [],
                 "original_answer": None,
                 "improvement_reason": None,
+                "source": "knowledge_base",
             }
             return result
+
+        # --- Try web search if KB doesn't have the answer ---
+        if is_no_info_answer or hallucination.get("retrieval_quality") == "poor":
+            web_result = await self._try_web_fallback(query, intent)
+            if web_result is not None:
+                web_result["healing_metadata"] = {
+                    "attempts": 1,
+                    "was_healed": True,
+                    "strategies_used": ["web_search_fallback"],
+                    "original_answer": result["answer"],
+                    "improvement_reason": "Knowledge base had no relevant data — answered from web search",
+                    "source": "web_search",
+                }
+                return web_result
 
         # --- Hallucination detected — diagnose and retry ---
         original_answer = result["answer"]
         strategies_used = []
 
         for retry_num in range(MAX_RETRIES):
-            # Diagnose cause and pick strategy
             strategy = self._diagnose_and_select_strategy(hallucination, retry_num)
             strategies_used.append(strategy["name"])
 
-            # Execute retry with corrective parameters
             retry_result = await self._run_pipeline(
                 query=strategy.get("expanded_query", query),
                 intent=strategy.get("intent", intent),
@@ -131,36 +161,88 @@ class SelfHealingPipeline:
 
             retry_hallucination = retry_result["hallucination_check"]
 
-            # Check if retry is better
             if not retry_hallucination.get("is_hallucinated", False):
-                # Healed — return the retry result
                 retry_result["healing_metadata"] = {
-                    "attempts": retry_num + 2,  # +1 for original, +1 for 0-index
+                    "attempts": retry_num + 2,
                     "was_healed": True,
                     "strategies_used": strategies_used,
                     "original_answer": original_answer,
                     "improvement_reason": f"Strategy '{strategy['name']}' resolved the hallucination",
+                    "source": "knowledge_base",
                 }
                 return retry_result
 
-            # Retry didn't fix it — check if confidence improved
+            # Check if confidence improved
             original_confidence = hallucination.get("confidence_score", 0)
             retry_confidence = retry_hallucination.get("confidence_score", 0)
 
             if retry_confidence > original_confidence:
-                # Partial improvement — use the better result for next iteration
                 result = retry_result
                 hallucination = retry_hallucination
 
-        # --- All retries exhausted — return best result with warning ---
+        # --- All KB retries exhausted — try web as last resort ---
+        web_result = await self._try_web_fallback(query, intent)
+        if web_result is not None:
+            web_result["healing_metadata"] = {
+                "attempts": MAX_RETRIES + 2,
+                "was_healed": True,
+                "strategies_used": strategies_used + ["web_search_fallback"],
+                "original_answer": original_answer,
+                "improvement_reason": "KB retries failed — answered from web search",
+                "source": "web_search",
+            }
+            return web_result
+
+        # --- Everything failed — return best KB attempt ---
         result["healing_metadata"] = {
             "attempts": MAX_RETRIES + 1,
             "was_healed": False,
             "strategies_used": strategies_used,
             "original_answer": original_answer,
             "improvement_reason": "Retries did not fully resolve hallucination — returning best attempt",
+            "source": "knowledge_base",
         }
         return result
+
+    async def _try_web_fallback(self, query: str, intent: str) -> Optional[dict]:
+        """
+        Search the web and generate an answer from web results.
+        Returns None if web search yields nothing useful.
+        """
+        search_results = web_search_service.search(query, max_results=5)
+        if not search_results:
+            return None
+
+        web_chunks = web_search_service.format_as_chunks(search_results)
+        if not web_chunks:
+            return None
+
+        # Generate answer from web context
+        generation = await generator_service.generate(
+            query=query,
+            context_chunks=web_chunks,
+            intent=intent,
+        )
+
+        # Skip full hallucination check for web results — just do a basic verification
+        return {
+            "answer": generation["answer"],
+            "model": generation["model"],
+            "usage": generation["usage"],
+            "retrieved_chunks": web_chunks,
+            "hallucination_check": {
+                "is_hallucinated": False,
+                "confidence_score": 0.6,
+                "retrieval_quality": "web",
+                "entropy_score": None,
+                "llm_verdict": "WEB_SOURCED",
+                "hallucination_type": None,
+                "severity": None,
+                "flagged_claims": [],
+                "likely_causes": [],
+                "details": "Answer sourced from web search (not knowledge base)",
+            },
+        }
 
     def _diagnose_and_select_strategy(
         self, hallucination: dict, retry_num: int

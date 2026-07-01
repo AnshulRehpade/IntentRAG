@@ -22,8 +22,8 @@ class IngestionService:
 
     def __init__(
         self,
-        chunk_size: int = 512,
-        chunk_overlap: int = 50,
+        chunk_size: int = 256,
+        chunk_overlap: int = 30,
     ):
         self._splitter = SentenceSplitter(
             chunk_size=chunk_size,
